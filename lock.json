@@ -1,0 +1,13 @@
+{
+    "memo": "",
+    "projects": [
+        {
+            "name": "github.com/spaolacci/murmur3",
+            "branch": "master",
+            "revision": "0d12bf811670bf6a1a63828dfbd003eded177fce",
+            "packages": [
+                "."
+            ]
+        }
+    ]
+}

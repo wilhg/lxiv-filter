@@ -1,0 +1,7 @@
+{
+    "dependencies": {
+        "github.com/spaolacci/murmur3": {
+            "branch": "master"
+        }
+    }
+}
