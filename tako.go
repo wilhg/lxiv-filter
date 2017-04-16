@@ -1,4 +1,4 @@
-package takoyaki
+package tako
 
 import (
 	"github.com/spaolacci/murmur3"
@@ -51,6 +51,6 @@ func (t tako) calcPosition(data []byte) (mapIdx uint32, podIdx uint8) {
 	hashCode := hash.Sum64()
 
 	mapIdx = uint32((hashCode >> 6) & uint64(t.size-1)) // == (hashCode >> 6) % t.size
-	podIdx = uint8(hashCode & (1<<7 - 1))               // == hashCode % 64
+	podIdx = uint8(hashCode & (1<<7 - 1))               // ==  hashCode % 64
 	return
 }

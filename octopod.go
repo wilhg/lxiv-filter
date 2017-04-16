@@ -1,4 +1,4 @@
-package takoyaki
+package tako
 
 type octopod uint64
 
