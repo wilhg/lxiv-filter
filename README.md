@@ -7,7 +7,7 @@ This bloom filter implementation is backed by uint64 array.
 
 And the hashing functions used is [murmur3](github.com/spaolacci/murmur3), a fast and good hashing function.
 
-***WARNING***: Before you using any implementation of bloom filter, please have a view of this article, to know how to config your parameters.
+***WARNING***: Before you using any implementation of bloom filter, please have a view of this [article](http://pages.cs.wisc.edu/~cao/papers/summary-cache/node8.html), to know how to config your parameters.
 
 ## Installation
 
