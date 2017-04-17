@@ -1,7 +1,6 @@
 package lxivFilter
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -111,23 +110,22 @@ func Test_lxivFilter_K(t *testing.T) {
 }
 
 func Test_lxivFilter_Add_MayExist(t *testing.T) {
-	lf := New(1<<21, 4)
-	tests := []struct {
+	lf := New(1<<10, 5)
+	type tt struct {
 		input  []byte
 		before bool
 		after  bool
-	}{
-		{[]byte("rewer"), false, true},
-		// {[]byte("1231"), false, true},
+	}
+	tests := make([]*tt, 1024)
+	for i := range tests {
+		tests[i] = &tt{randStr(32), false, true}
 	}
 
 	for _, test := range tests {
 		if before := lf.MayExist(test.input); before != test.before {
 			t.Errorf("before add, lf.MayExist(%q) = %v", test.input, before)
 		}
-		fmt.Println()
 		lf.Add(test.input)
-		fmt.Println()
 		if after := lf.MayExist(test.input); after != test.after {
 			t.Errorf("after add, lf.MayExist(%q) = %v", test.input, after)
 		}
