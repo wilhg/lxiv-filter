@@ -87,14 +87,15 @@ func hash256(data []byte) [4]uint64 {
 	h := murmur3.New128()
 	h.Write(data)
 	x0, x1 := h.Sum128()
-	h.Write([]byte{0})
+	h.Write([]byte{42})
 	x2, x3 := h.Sum128()
 	return [4]uint64{x0, x1, x2, x3}
 }
 
 func (lf lxivFilter) calcPosition(h [4]uint64, x uint8) (uint64, uint8) {
 	ux := uint64(x)
-	hashCode := (h[x&1] + ux*h[(((x+(x&1))&3)>>1)+2]) & (lf.bitSize - 1)
+	xn1 := x & 1
+	hashCode := (h[xn1] + ux*h[(((x+xn1)&3)>>1)+2]) & (lf.bitSize - 1)
 	mapIdx := (hashCode >> 6) & (lf.size - 1) // == (hashCode >> 6) % lf.size
 	cellIdx := uint8(hashCode & 0x3f)         // ==  hashCode % 64
 	return mapIdx, cellIdx
