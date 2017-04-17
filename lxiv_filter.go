@@ -1,9 +1,6 @@
 package lxivFilter
 
 import (
-	"math/rand"
-	"time"
-
 	"github.com/spaolacci/murmur3"
 )
 
@@ -67,14 +64,4 @@ func (lf lxivFilter) calcPosition(data []byte) (uint64, uint8) {
 	mapIdx := uint64((hashCode >> 5) & uint64(lf.size-1)) // == (hashCode >> 5) % lf.size
 	cellIdx := uint8(hashCode & (1<<6 - 1))               // ==  hashCode % 64
 	return mapIdx, cellIdx
-}
-
-func genRandString(strlen int) []byte {
-	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	result := make([]byte, strlen)
-	for i := range result {
-		result[i] = chars[r.Intn(len(chars))]
-	}
-	return result
 }
