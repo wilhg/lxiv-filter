@@ -7,6 +7,8 @@ This bloom filter implementation is backed by uint64 array.
 
 And the hashing functions used is [murmurhash](github.com/spaolacci/murmur3), a non-cryptographic hashing function.
 
+***WARNING***: Before you using any implementation of bloom filter, please have a view of this article, to know how to config your parameters.
+
 ## Installation
 
 ```bash
@@ -17,18 +19,19 @@ go get -u github.com/cuebyte/lxiv-filter
 ```go
 import "github.com/cuebyte/lxiv-filter"
 
-lf := lxivFilter.NewDefault()
+lf := lxivFilter.NewDefault() // == lf.New(1<<32, 5)
 
-lf.Size() == 1 << 24 // True
-lf.K() == 5 // True
+// The size has to be a power of 2, and greater than 64.
+lf.Size()                           // Return 1 << 32
+lf.K()                              // Return 5
 
-lf.MayExist([]byte("Hello World!")) == false // True
+lf.MayExist([]byte("Hello World!")) // Return False
 
 lf.Add([]byte("Hello World!"))
 
-lf.MayExist([]byte("Hello World!")) == true // True
+lf.MayExist([]byte("Hello World!")) // Return True
 
-lf.Reset() // Clean the bit-map
+lf.Reset()                          // Clean the bit-map
 ```
 
-However, before calling `Add()` method, we don't need to check whether the data is existed.
+However, before calling `Add()`, we don't need to check whether the data is existed.
