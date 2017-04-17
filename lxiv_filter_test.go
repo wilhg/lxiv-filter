@@ -9,7 +9,7 @@ import (
 func TestNew(t *testing.T) {
 	type args struct {
 		size uint64
-		k    int
+		k    uint8
 	}
 	tests := []struct {
 		name string
@@ -32,7 +32,7 @@ func Test_lxivFilter_Reset(t *testing.T) {
 	type fields struct {
 		cells []cell
 		size  uint64
-		k     int
+		k     uint8
 	}
 	tests := []struct {
 		name   string
@@ -57,8 +57,8 @@ func Test_lxivFilter_Add_MayExist(t *testing.T) {
 	done := make(chan struct{}, amount)
 	bWrong := make(chan struct{}, amount/1000)
 	aWrong := make(chan struct{}, amount/1000)
-	lf := NewDefault()
-	// lf := NewWithEstimate(amount, 0.0001)
+	// lf := NewDefault()
+	lf := NewWithEstimate(amount, 0.0001)
 	fmt.Printf("k=%d\n", lf.K())
 	fmt.Printf("m/n=%d\n", lf.Size()/amount)
 	type tt struct {
@@ -119,12 +119,12 @@ func genRandByteArrayX(len int, b *testing.B) {
 func Benchmark_lxivFilter_Add(b *testing.B) {
 	const amount = 1000000
 	const times = 100000
-	lf := NewDefault()
-	// lf := NewWithEstimate(amount, 0.0001)
+	// lf := NewDefault()
+	lf := NewWithEstimate(amount, 0.0001)
 	ss := make([][]byte, times)
 	b.N = times
 	for i := 0; i < b.N; i++ {
-		ss[i] = genRandByteArray(32)
+		ss[i] = genRandByteArray(100)
 	}
 
 	b.ResetTimer()
@@ -136,12 +136,12 @@ func Benchmark_lxivFilter_Add(b *testing.B) {
 func Benchmark_lxivFilter_MayExist_allMiss(b *testing.B) {
 	const amount = 1000000
 	const times = 100000
-	lf := NewDefault()
-	// lf := NewWithEstimate(amount, 0.0001)
+	// lf := NewDefault()
+	lf := NewWithEstimate(amount, 0.0001)
 	ss := make([][]byte, times)
 	b.N = times
 	for i := 0; i < b.N; i++ {
-		ss[i] = genRandByteArray(32)
+		ss[i] = genRandByteArray(100)
 	}
 
 	b.ResetTimer()
@@ -153,12 +153,12 @@ func Benchmark_lxivFilter_MayExist_allMiss(b *testing.B) {
 func Benchmark_lxivFilter_MayExist_allHit(b *testing.B) {
 	const amount = 1000000
 	const times = 100000
-	lf := NewDefault()
-	// lf := NewWithEstimate(amount, 0.0001)
+	// lf := NewDefault()
+	lf := NewWithEstimate(amount, 0.0001)
 	ss := make([][]byte, times)
 	b.N = times
 	for i := 0; i < b.N; i++ {
-		ss[i] = genRandByteArray(32)
+		ss[i] = genRandByteArray(100)
 	}
 	for i := 0; i < b.N; i++ {
 		lf.Add(ss[i])

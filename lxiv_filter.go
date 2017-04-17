@@ -2,19 +2,21 @@ package lxivFilter
 
 import (
 	"math"
+
+	"github.com/spaolacci/murmur3"
 )
 
 type lxivFilter struct {
 	cells []cell
 
 	size uint64
-	k    int
+	k    uint8
 }
 
 // New will new a LxivFilter
 // size here is to define the size bit-map, it has to be a power of 2 and larger than 64
 // k means the number of times to call hash functions, here is using murmur3
-func New(size uint64, k int) *lxivFilter {
+func New(size uint64, k uint8) *lxivFilter {
 	if size&(size-1) != 0 {
 		panic("Please set the size as a power of 2")
 	}
@@ -26,6 +28,7 @@ func New(size uint64, k int) *lxivFilter {
 	}
 	cells := make([]cell, size>>6)
 	return &lxivFilter{cells, size >> 6, k}
+
 }
 
 // New will calculate the best m and k by n and p.
@@ -37,61 +40,61 @@ func NewWithEstimate(n uint64, p float64) *lxivFilter {
 	for m2 < m {
 		m2 <<= 1
 	}
-	k := int(math.Ceil(math.Log(2) * float64(m) / float64(n)))
+	k := uint8(math.Ceil(math.Log(2) * float64(m) / float64(n)))
 	return New(m2, k)
 }
 
 // NewDefault will new an LxivFilter who's size=1<<32, k = 4
 // It will cost 1GB memory
-func NewDefault() *lxivFilter { return New((1 << 32), 4) }
+func NewDefault() *lxivFilter { return New(1<<32, 4) }
 
 // Reset will clean the whole filter
 func (lf *lxivFilter) Reset()      { lf.cells = make([]cell, lf.size) }
 func (lf lxivFilter) Size() uint64 { return lf.size << 6 }
-func (lf lxivFilter) K() int       { return lf.k }
+func (lf lxivFilter) K() uint8     { return lf.k }
 
 // MayExist will check whether the data may exist (true), or definite not exist (false)
 func (lf lxivFilter) MayExist(data []byte) bool {
-	i := 0
-	for ; i < lf.k; i += 2 {
-		h1, h2 := h128(append(data, byte(i)))
-		if !lf.isOn(h1) || !lf.isOn(h2) {
+	baseHash := hash256(data)
+	for i := uint8(0); i < lf.k; i++ {
+		if !lf.isOn(baseHash, i) {
 			return false
 		}
-	}
-	if i > lf.k {
-		h := h64(append(data, byte(i)))
-		return lf.isOn(h)
 	}
 	return true
 }
 
 // Add will set records to filter
 func (lf *lxivFilter) Add(data []byte) {
-	i := 0
-	for ; i < lf.k; i += 2 {
-		h1, h2 := h128(append(data, byte(i)))
-		lf.switchOn(h1)
-		lf.switchOn(h2)
-	}
-	if i > lf.k {
-		h := h64(append(data, byte(i)))
-		lf.switchOn(h)
+	baseHash := hash256(data)
+	for i := uint8(0); i < lf.k; i++ {
+		lf.switchOn(baseHash, i)
 	}
 }
 
-func (lf lxivFilter) isOn(position uint64) bool {
-	mapIdx, cellIdx := lf.calcPosition(position)
+func (lf lxivFilter) isOn(base [4]uint64, i uint8) bool {
+	mapIdx, cellIdx := lf.calcPosition(base, i)
 	return lf.cells[mapIdx].at(cellIdx)
 }
 
-func (lf *lxivFilter) switchOn(position uint64) {
-	mapIdx, cellIdx := lf.calcPosition(position)
+func (lf *lxivFilter) switchOn(base [4]uint64, i uint8) {
+	mapIdx, cellIdx := lf.calcPosition(base, i)
 	lf.cells[mapIdx] = lf.cells[mapIdx].switchOn(cellIdx)
 }
 
-func (lf lxivFilter) calcPosition(hashCode uint64) (uint64, uint8) {
-	mapIdx := uint64((hashCode >> 5) & uint64(lf.size-1)) // == (hashCode >> 5) % lf.size
-	cellIdx := uint8(hashCode & (1<<6 - 1))               // ==  hashCode % 64
+func hash256(data []byte) [4]uint64 {
+	h := murmur3.New128()
+	h.Write(data)
+	x0, x1 := h.Sum128()
+	h.Write([]byte{0})
+	x2, x3 := h.Sum128()
+	return [4]uint64{x0, x1, x2, x3}
+}
+
+func (lf lxivFilter) calcPosition(h [4]uint64, x uint8) (uint64, uint8) {
+	i := uint64(x)
+	hashCode := (h[i&1] + i*h[2+(((i+(i&1))&3)>>1)]) & (lf.Size() - 1)
+	mapIdx := (hashCode >> 5) & (lf.size - 1) // == (hashCode >> 5) % lf.size
+	cellIdx := uint8(hashCode & (1<<6 - 1))   // ==  hashCode % 64
 	return mapIdx, cellIdx
 }
