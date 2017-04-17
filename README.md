@@ -25,11 +25,11 @@ lf := lxivFilter.NewDefault() // == lf.New(1<<32, 5)
 lf.Size()                           // Return 1 << 32
 lf.K()                              // Return 5
 
-lf.MayExist([]byte("Hello World!")) // Return False
+lf.MayExist([]byte("Hello World!")) // Return false
 
 lf.Add([]byte("Hello World!"))
 
-lf.MayExist([]byte("Hello World!")) // Return True
+lf.MayExist([]byte("Hello World!")) // Return true
 
 lf.Reset()                          // Clean the bit-map
 ```
