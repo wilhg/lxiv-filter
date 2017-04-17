@@ -1,11 +1,12 @@
 package lxivFilter
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
 
-func TestNew(t *testing.T) {
+func TestManualNew(t *testing.T) {
 	type args struct {
 		size uint64
 		k    int
@@ -20,7 +21,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := New(tt.args.size, tt.args.k); !reflect.DeepEqual(got, tt.want) {
+			if got := ManualNew(tt.args.size, tt.args.k); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
@@ -51,76 +52,52 @@ func Test_lxivFilter_Reset(t *testing.T) {
 	}
 }
 
-func Test_lxivFilter_Size(t *testing.T) {
-	type fields struct {
-		size uint64
-		k    int
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   uint64
-	}{
-		{"", fields{64, 2}, 64},
-		{"", fields{128, 2}, 128},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			lf := New(tt.fields.size, tt.fields.k)
-			if got := lf.Size(); got != tt.want {
-				t.Errorf("lxivFilter.Size() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_lxivFilter_K(t *testing.T) {
-	type fields struct {
-		cells []cell
-		size  uint64
-		k     int
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   int
-	}{
-		{"", fields{make([]cell, 1), 1, 3}, 3},
-		{"", fields{make([]cell, 1), 1, 5}, 5},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			lf := lxivFilter{
-				cells: tt.fields.cells,
-				size:  tt.fields.size,
-				k:     tt.fields.k,
-			}
-			if got := lf.K(); got != tt.want {
-				t.Errorf("lxivFilter.K() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_lxivFilter_Add_MayExist(t *testing.T) {
-	lf := NewDefault()
+	const amount = 1000000
+	done := make(chan struct{}, amount)
+	bWrong := make(chan struct{}, amount/1000)
+	aWrong := make(chan struct{}, amount/1000)
+	// lf := NewDefault()
+	lf := New(amount, 0.0001)
+	fmt.Printf("k=%d\n", lf.K())
+	fmt.Printf("m/n=%d\n", lf.Size()/amount)
 	type tt struct {
 		input  []byte
 		before bool
 		after  bool
 	}
-	tests := make([]*tt, 1024)
+	tests := make([]*tt, amount)
 	for i := range tests {
-		tests[i] = &tt{genRandString(32), false, true}
+		tests[i] = &tt{genRandByteArray(32), false, true}
 	}
 
 	for _, test := range tests {
-		if before := lf.MayExist(test.input); before != test.before {
-			t.Errorf("before add, lf.MayExist(%q) = %v", test.input, before)
-		}
-		lf.Add(test.input)
-		if after := lf.MayExist(test.input); after != test.after {
-			t.Errorf("after add, lf.MayExist(%q) = %v", test.input, after)
-		}
+		go func(test *tt) {
+			if before := lf.MayExist(test.input); before != test.before {
+				bWrong <- struct{}{}
+			}
+			lf.Add(test.input)
+			if after := lf.MayExist(test.input); after != test.after {
+				aWrong <- struct{}{}
+			}
+			done <- struct{}{}
+		}(test)
 	}
+	bErrors := 0
+	aErrors := 0
+	go func() {
+		for {
+			select {
+			case <-bWrong:
+				bErrors++
+			case <-aWrong:
+				aErrors++
+			}
+		}
+	}()
+	for i := 0; i < amount; i++ {
+		<-done
+	}
+	fmt.Printf("before errors number: %d\n", bErrors)
+	fmt.Printf("after errors number: %d\n", aErrors)
 }

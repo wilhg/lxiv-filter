@@ -1,6 +1,8 @@
 package lxivFilter
 
 import (
+	"math"
+
 	"github.com/spaolacci/murmur3"
 )
 
@@ -14,7 +16,7 @@ type lxivFilter struct {
 // New will new a LxivFilter
 // size here is to define the size bit-map, it has to be a power of 2 and larger than 64
 // k means the number of times to call hash functions, here is using murmur3
-func New(size uint64, k int) *lxivFilter {
+func ManualNew(size uint64, k int) *lxivFilter {
 	if size&(size-1) != 0 {
 		panic("Please set the size as a power of 2")
 	}
@@ -28,9 +30,22 @@ func New(size uint64, k int) *lxivFilter {
 	return &lxivFilter{cells, size >> 6, k}
 }
 
-// NewDefault will new an LxivFilter who's size=1<<32, k = 5
+// New will calculate the best m and k by n and p.
+// n is the number of entries the data structure is expected to support.
+// p is the false positive rate that is considered acceptable.
+func New(n uint64, p float64) *lxivFilter {
+	m := uint64(math.Ceil(-1 * float64(n) * math.Log(p) / math.Pow(math.Log(2), 2)))
+	m2 := uint64(1 << 6) // 64 is the beginning
+	for m2 < m {
+		m2 <<= 1
+	}
+	k := int(math.Ceil(math.Log(2) * float64(m) / float64(n)))
+	return ManualNew(m2, k)
+}
+
+// NewDefault will new an LxivFilter who's size=1<<32, k = 6
 // It will cost 1GB memory
-func NewDefault() *lxivFilter { return New((1 << 32), 5) }
+func NewDefault() *lxivFilter { return ManualNew((1 << 32), 6) }
 
 // Reset will clean the whole filter
 func (lf *lxivFilter) Reset()      { lf.cells = make([]cell, lf.size) }
