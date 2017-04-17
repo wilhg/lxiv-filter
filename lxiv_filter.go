@@ -21,8 +21,8 @@ func New(size uint64, k int) *lxivFilter {
 	if size < 64 {
 		panic("size should greater than 64")
 	}
-	if k > 32 {
-		panic("k shouldn't greater than 32")
+	if k > 32 || k <= 1 {
+		panic("k should be: 1 < k <= 32")
 	}
 	cells := make([]cell, size>>6)
 	return &lxivFilter{cells, size >> 6, k}
@@ -39,29 +39,61 @@ func (lf lxivFilter) K() int       { return lf.k }
 
 // MayExist will check whether the data may exist (true), or definite not exist (false)
 func (lf lxivFilter) MayExist(data []byte) bool {
-	for i := 0; i < lf.k; i++ {
-		mapIdx, cellIdx := lf.calcPosition(append(data, byte(i)))
-		if !lf.cells[mapIdx].at(cellIdx) {
+	i := 0
+	for ; i < lf.k; i += 2 {
+		h1, h2 := h128(append(data, byte(i)))
+		if lf.read(h1) == false {
 			return false
 		}
+		if lf.read(h2) == false {
+			return false
+		}
+	}
+	if i > lf.k {
+		h := h64(append(data, byte(i)))
+		return lf.read(h)
 	}
 	return true
 }
 
 // Add will set records to filter
 func (lf *lxivFilter) Add(data []byte) {
-	for i := 0; i < lf.k; i++ {
-		mapIdx, cellIdx := lf.calcPosition(append(data, byte(i)))
-		lf.cells[mapIdx] = lf.cells[mapIdx].turnOn(cellIdx)
+	i := 0
+	for ; i < lf.k; i += 2 {
+		h1, h2 := h128(append(data, byte(i)))
+		lf.switchOn(h1)
+		lf.switchOn(h2)
+	}
+	if i > lf.k {
+		h := h64(append(data, byte(i)))
+		lf.switchOn(h)
 	}
 }
 
-func (lf lxivFilter) calcPosition(data []byte) (uint64, uint8) {
-	hash := murmur3.New64()
-	hash.Write(data)
-	hashCode := hash.Sum64()
+func (lf lxivFilter) read(position uint64) bool {
+	mapIdx, cellIdx := lf.calcPosition(position)
+	return lf.cells[mapIdx].at(cellIdx)
+}
 
+func (lf *lxivFilter) switchOn(position uint64) {
+	mapIdx, cellIdx := lf.calcPosition(position)
+	lf.cells[mapIdx] = lf.cells[mapIdx].switchOn(cellIdx)
+}
+
+func (lf lxivFilter) calcPosition(hashCode uint64) (uint64, uint8) {
 	mapIdx := uint64((hashCode >> 5) & uint64(lf.size-1)) // == (hashCode >> 5) % lf.size
 	cellIdx := uint8(hashCode & (1<<6 - 1))               // ==  hashCode % 64
 	return mapIdx, cellIdx
+}
+
+func h64(data []byte) uint64 {
+	hash := murmur3.New64()
+	hash.Write(data)
+	return hash.Sum64()
+}
+
+func h128(data []byte) (uint64, uint64) {
+	hash := murmur3.New128()
+	hash.Write(data)
+	return hash.Sum128()
 }

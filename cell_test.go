@@ -30,7 +30,7 @@ func Test_cell_at(t *testing.T) {
 	}
 }
 
-func Test_cell_turnOn(t *testing.T) {
+func Test_cell_switchOn(t *testing.T) {
 	type args struct {
 		i uint8
 	}
@@ -47,14 +47,14 @@ func Test_cell_turnOn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.c.turnOn(tt.args.i); got != tt.want {
-				t.Errorf("cell.turnOn() = %v, want %v", got, tt.want)
+			if got := tt.c.switchOn(tt.args.i); got != tt.want {
+				t.Errorf("cell.switchOn() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_cell_turnOff(t *testing.T) {
+func Test_cell_switchOff(t *testing.T) {
 	type args struct {
 		i uint8
 	}
@@ -71,8 +71,8 @@ func Test_cell_turnOff(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.c.turnOff(tt.args.i); got != tt.want {
-				t.Errorf("cell.turnOff() = %v, want %v", got, tt.want)
+			if got := tt.c.switchOff(tt.args.i); got != tt.want {
+				t.Errorf("cell.switchOff() = %v, want %v", got, tt.want)
 			}
 		})
 	}

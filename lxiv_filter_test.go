@@ -15,8 +15,8 @@ func TestNew(t *testing.T) {
 		args args
 		want *lxivFilter
 	}{
-		{"", args{64, 1}, &lxivFilter{make([]cell, 1), 1, 1}},
-		{"", args{1 << 16, 1}, &lxivFilter{make([]cell, 1<<10), 1 << 10, 1}},
+		{"", args{64, 2}, &lxivFilter{make([]cell, 1), 1, 2}},
+		{"", args{1 << 16, 2}, &lxivFilter{make([]cell, 1<<10), 1 << 10, 2}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,8 +61,8 @@ func Test_lxivFilter_Size(t *testing.T) {
 		fields fields
 		want   uint64
 	}{
-		{"", fields{64, 1}, 64},
-		{"", fields{128, 1}, 128},
+		{"", fields{64, 2}, 64},
+		{"", fields{128, 2}, 128},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
