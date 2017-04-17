@@ -58,7 +58,7 @@ func Test_lxivFilter_Add_MayExist(t *testing.T) {
 	bWrong := make(chan struct{}, amount/1000)
 	aWrong := make(chan struct{}, amount/1000)
 	lf := NewDefault()
-	// lf := New(amount, 0.0001)
+	// lf := NewWithEstimate(amount, 0.0001)
 	fmt.Printf("k=%d\n", lf.K())
 	fmt.Printf("m/n=%d\n", lf.Size()/amount)
 	type tt struct {
@@ -120,7 +120,7 @@ func Benchmark_lxivFilter_Add(b *testing.B) {
 	const amount = 1000000
 	const times = 100000
 	lf := NewDefault()
-	// lf := New(amount, 0.0001)
+	// lf := NewWithEstimate(amount, 0.0001)
 	ss := make([][]byte, times)
 	b.N = times
 	for i := 0; i < b.N; i++ {
@@ -137,7 +137,7 @@ func Benchmark_lxivFilter_MayExist_allMiss(b *testing.B) {
 	const amount = 1000000
 	const times = 100000
 	lf := NewDefault()
-	// lf := New(amount, 0.0001)
+	// lf := NewWithEstimate(amount, 0.0001)
 	ss := make([][]byte, times)
 	b.N = times
 	for i := 0; i < b.N; i++ {
@@ -154,7 +154,7 @@ func Benchmark_lxivFilter_MayExist_allHit(b *testing.B) {
 	const amount = 1000000
 	const times = 100000
 	lf := NewDefault()
-	// lf := New(amount, 0.0001)
+	// lf := NewWithEstimate(amount, 0.0001)
 	ss := make([][]byte, times)
 	b.N = times
 	for i := 0; i < b.N; i++ {
