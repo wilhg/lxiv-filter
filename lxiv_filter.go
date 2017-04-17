@@ -2,8 +2,6 @@ package lxivFilter
 
 import (
 	"math"
-
-	"github.com/spaolacci/murmur3"
 )
 
 type lxivFilter struct {
@@ -57,16 +55,13 @@ func (lf lxivFilter) MayExist(data []byte) bool {
 	i := 0
 	for ; i < lf.k; i += 2 {
 		h1, h2 := h128(append(data, byte(i)))
-		if lf.read(h1) == false {
-			return false
-		}
-		if lf.read(h2) == false {
+		if !lf.isOn(h1) || !lf.isOn(h2) {
 			return false
 		}
 	}
 	if i > lf.k {
 		h := h64(append(data, byte(i)))
-		return lf.read(h)
+		return lf.isOn(h)
 	}
 	return true
 }
@@ -85,7 +80,7 @@ func (lf *lxivFilter) Add(data []byte) {
 	}
 }
 
-func (lf lxivFilter) read(position uint64) bool {
+func (lf lxivFilter) isOn(position uint64) bool {
 	mapIdx, cellIdx := lf.calcPosition(position)
 	return lf.cells[mapIdx].at(cellIdx)
 }
@@ -99,16 +94,4 @@ func (lf lxivFilter) calcPosition(hashCode uint64) (uint64, uint8) {
 	mapIdx := uint64((hashCode >> 5) & uint64(lf.size-1)) // == (hashCode >> 5) % lf.size
 	cellIdx := uint8(hashCode & (1<<6 - 1))               // ==  hashCode % 64
 	return mapIdx, cellIdx
-}
-
-func h64(data []byte) uint64 {
-	hash := murmur3.New64()
-	hash.Write(data)
-	return hash.Sum64()
-}
-
-func h128(data []byte) (uint64, uint64) {
-	hash := murmur3.New128()
-	hash.Write(data)
-	return hash.Sum128()
 }
