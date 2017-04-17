@@ -118,7 +118,7 @@ func Test_lxivFilter_Add_MayExist(t *testing.T) {
 	}
 	tests := make([]*tt, 1024)
 	for i := range tests {
-		tests[i] = &tt{randStr(32), false, true}
+		tests[i] = &tt{genRandString(32), false, true}
 	}
 
 	for _, test := range tests {

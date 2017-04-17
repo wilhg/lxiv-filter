@@ -29,9 +29,9 @@ func New(size uint64, k int) *lxivFilter {
 	return &lxivFilter{cells, size, k}
 }
 
-// NewDefault will new an LxivFilter who's size=1<<32 - 1, k = 5
+// NewDefault will new an LxivFilter who's size=1<<24, k = 5
 // It will cost 1GB memory
-func NewDefault() *lxivFilter { return New((1 << 32), 5) }
+func NewDefault() *lxivFilter { return New((1 << 24), 5) }
 
 // Reset will clean the whole filter
 func (lf *lxivFilter) Reset()      { lf.cells = make([]cell, lf.size) }
@@ -67,7 +67,7 @@ func (lf lxivFilter) calcPosition(data []byte) (uint64, uint8) {
 	return mapIdx, cellIdx
 }
 
-func randStr(strlen int) []byte {
+func genRandString(strlen int) []byte {
 	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	result := make([]byte, strlen)
