@@ -1,8 +1,10 @@
 package lxivFilter
 
 import (
+	"encoding/binary"
 	"fmt"
 	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -16,8 +18,8 @@ func TestNew(t *testing.T) {
 		args args
 		want *lxivFilter
 	}{
-		{"", args{64, 2}, &lxivFilter{make([]cell, 1), 1, 2}},
-		{"", args{1 << 16, 2}, &lxivFilter{make([]cell, 1<<10), 1 << 10, 2}},
+		{"", args{64, 2}, &lxivFilter{make([]cell, 1), 1, 64, 2}},
+		{"", args{1 << 16, 2}, &lxivFilter{make([]cell, 1<<10), 1 << 10, 1 << 16, 2}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -53,7 +55,7 @@ func Test_lxivFilter_Reset(t *testing.T) {
 }
 
 func Test_lxivFilter_Add_MayExist(t *testing.T) {
-	const amount = 1000
+	const amount = 1000000
 	done := make(chan struct{}, amount)
 	bWrong := make(chan struct{}, amount/1000)
 	aWrong := make(chan struct{}, amount/1000)
@@ -68,7 +70,7 @@ func Test_lxivFilter_Add_MayExist(t *testing.T) {
 	}
 	tests := make([]*tt, amount)
 	for i := range tests {
-		tests[i] = &tt{genRandByteArray(32), false, true}
+		tests[i] = &tt{[]byte(strconv.Itoa(i)), false, true}
 	}
 
 	for _, test := range tests {
@@ -102,69 +104,36 @@ func Test_lxivFilter_Add_MayExist(t *testing.T) {
 	fmt.Printf("after errors number: %d\n", aErrors)
 }
 
-func genRandByteArrayX(len int, b *testing.B) {
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		genRandByteArray(len)
-	}
-}
-
-// func Benchmark_genRandByteArray16(b *testing.B)  { genRandByteArrayX(16, b) }
-// func Benchmark_genRandByteArray32(b *testing.B)  { genRandByteArrayX(32, b) }
-// func Benchmark_genRandByteArray64(b *testing.B)  { genRandByteArrayX(64, b) }
-// func Benchmark_genRandByteArray128(b *testing.B) { genRandByteArrayX(128, b) }
-// func Benchmark_genRandByteArray256(b *testing.B) { genRandByteArrayX(256, b) }
-// func Benchmark_genRandByteArray512(b *testing.B) { genRandByteArrayX(512, b) }
-
 func Benchmark_lxivFilter_Add(b *testing.B) {
-	const amount = 1000000
-	const times = 100000
-	// lf := NewDefault()
-	lf := NewWithEstimate(amount, 0.0001)
-	ss := make([][]byte, times)
-	b.N = times
-	for i := 0; i < b.N; i++ {
-		ss[i] = genRandByteArray(100)
-	}
-
+	lf := NewWithEstimate(uint64(b.N), 0.0001)
+	key := make([]byte, 100)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		lf.Add(ss[i])
+		binary.BigEndian.PutUint32(key, uint32(i))
+		lf.Add(key)
 	}
 }
 
 func Benchmark_lxivFilter_MayExist_allMiss(b *testing.B) {
-	const amount = 1000000
-	const times = 100000
-	// lf := NewDefault()
-	lf := NewWithEstimate(amount, 0.0001)
-	ss := make([][]byte, times)
-	b.N = times
-	for i := 0; i < b.N; i++ {
-		ss[i] = genRandByteArray(100)
-	}
-
+	lf := NewWithEstimate(uint64(b.N), 0.0001)
+	key := make([]byte, 100)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		lf.MayExist(ss[i])
+		binary.BigEndian.PutUint32(key, uint32(i))
+		lf.MayExist(key)
 	}
 }
 
 func Benchmark_lxivFilter_MayExist_allHit(b *testing.B) {
-	const amount = 1000000
-	const times = 100000
-	// lf := NewDefault()
-	lf := NewWithEstimate(amount, 0.0001)
-	ss := make([][]byte, times)
-	b.N = times
+	lf := NewWithEstimate(uint64(b.N), 0.0001)
+	key := make([]byte, 100)
 	for i := 0; i < b.N; i++ {
-		ss[i] = genRandByteArray(100)
-	}
-	for i := 0; i < b.N; i++ {
-		lf.Add(ss[i])
+		binary.BigEndian.PutUint32(key, uint32(i))
+		lf.Add(key)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		lf.MayExist(ss[i])
+		binary.BigEndian.PutUint32(key, uint32(i))
+		lf.MayExist(key)
 	}
 }

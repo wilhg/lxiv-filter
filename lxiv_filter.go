@@ -9,8 +9,9 @@ import (
 type lxivFilter struct {
 	cells []cell
 
-	size uint64
-	k    uint8
+	size    uint64
+	bitSize uint64
+	k       uint8
 }
 
 // New will new a LxivFilter
@@ -27,7 +28,7 @@ func New(size uint64, k uint8) *lxivFilter {
 		panic("k should be: 1 < k <= 32")
 	}
 	cells := make([]cell, size>>6)
-	return &lxivFilter{cells, size >> 6, k}
+	return &lxivFilter{cells, size >> 6, size, k}
 
 }
 
@@ -50,7 +51,7 @@ func NewDefault() *lxivFilter { return New(1<<32, 4) }
 
 // Reset will clean the whole filter
 func (lf *lxivFilter) Reset()      { lf.cells = make([]cell, lf.size) }
-func (lf lxivFilter) Size() uint64 { return lf.size << 6 }
+func (lf lxivFilter) Size() uint64 { return lf.bitSize }
 func (lf lxivFilter) K() uint8     { return lf.k }
 
 // MayExist will check whether the data may exist (true), or definite not exist (false)
@@ -92,9 +93,9 @@ func hash256(data []byte) [4]uint64 {
 }
 
 func (lf lxivFilter) calcPosition(h [4]uint64, x uint8) (uint64, uint8) {
-	i := uint64(x)
-	hashCode := (h[i&1] + i*h[2+(((i+(i&1))&3)>>1)]) & (lf.Size() - 1)
-	mapIdx := (hashCode >> 5) & (lf.size - 1) // == (hashCode >> 5) % lf.size
-	cellIdx := uint8(hashCode & (1<<6 - 1))   // ==  hashCode % 64
+	ux := uint64(x)
+	hashCode := (h[x&1] + ux*h[(((x+(x&1))&3)>>1)+2]) & (lf.bitSize - 1)
+	mapIdx := (hashCode >> 6) & (lf.size - 1) // == (hashCode >> 6) % lf.size
+	cellIdx := uint8(hashCode & 0x3f)         // ==  hashCode % 64
 	return mapIdx, cellIdx
 }
