@@ -59,7 +59,6 @@ func Test_lxivFilter_Add_MayExist(t *testing.T) {
 	done := make(chan struct{}, amount)
 	bWrong := make(chan struct{}, amount/1000)
 	aWrong := make(chan struct{}, amount/1000)
-	// lf := NewDefault()
 	lf := NewWithEstimate(amount, 0.0001)
 	fmt.Printf("k=%d\n", lf.K())
 	fmt.Printf("m/n=%d\n", lf.Size()/amount)
@@ -103,6 +102,18 @@ func Test_lxivFilter_Add_MayExist(t *testing.T) {
 	fmt.Printf("before errors number: %d\n", bErrors)
 	fmt.Printf("after errors number: %d\n", aErrors)
 }
+
+func benchmarkCalcPostion(k uint8, b *testing.B) {
+	lf := NewWithEstimate(uint64(b.N), 0.0001)
+	b.N = int(k)
+	baseHash := hash256([]byte("Here is one neckbottle, quite important."))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		lf.calcPosition(baseHash, uint8(i))
+	}
+}
+
+func Benchmark_lxivFilter_calcPosition14(b *testing.B) { benchmarkCalcPostion(14, b) }
 
 func Benchmark_lxivFilter_Add(b *testing.B) {
 	lf := NewWithEstimate(uint64(b.N), 0.0001)
