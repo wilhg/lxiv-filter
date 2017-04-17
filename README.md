@@ -5,7 +5,7 @@ A Bloom filter is a representation of a set of n items, where the main requireme
 
 This bloom filter implementation is backed by uint64 array.
 
-And the hashing functions used is [murmurhash](github.com/spaolacci/murmur3), a non-cryptographic hashing function.
+And the hashing functions used is [murmur3](github.com/spaolacci/murmur3), a fast and good hashing function.
 
 ***WARNING***: Before you using any implementation of bloom filter, please have a view of this article, to know how to config your parameters.
 
