@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestManualNew(t *testing.T) {
+func TestNew(t *testing.T) {
 	type args struct {
 		size uint64
 		k    int
@@ -21,7 +21,7 @@ func TestManualNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ManualNew(tt.args.size, tt.args.k); !reflect.DeepEqual(got, tt.want) {
+			if got := New(tt.args.size, tt.args.k); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})
@@ -53,12 +53,12 @@ func Test_lxivFilter_Reset(t *testing.T) {
 }
 
 func Test_lxivFilter_Add_MayExist(t *testing.T) {
-	const amount = 1000000
+	const amount = 1000
 	done := make(chan struct{}, amount)
 	bWrong := make(chan struct{}, amount/1000)
 	aWrong := make(chan struct{}, amount/1000)
-	// lf := NewDefault()
-	lf := New(amount, 0.0001)
+	lf := NewDefault()
+	// lf := New(amount, 0.0001)
 	fmt.Printf("k=%d\n", lf.K())
 	fmt.Printf("m/n=%d\n", lf.Size()/amount)
 	type tt struct {
@@ -100,4 +100,71 @@ func Test_lxivFilter_Add_MayExist(t *testing.T) {
 	}
 	fmt.Printf("before errors number: %d\n", bErrors)
 	fmt.Printf("after errors number: %d\n", aErrors)
+}
+
+func genRandByteArrayX(len int, b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		genRandByteArray(len)
+	}
+}
+
+// func Benchmark_genRandByteArray16(b *testing.B)  { genRandByteArrayX(16, b) }
+// func Benchmark_genRandByteArray32(b *testing.B)  { genRandByteArrayX(32, b) }
+// func Benchmark_genRandByteArray64(b *testing.B)  { genRandByteArrayX(64, b) }
+// func Benchmark_genRandByteArray128(b *testing.B) { genRandByteArrayX(128, b) }
+// func Benchmark_genRandByteArray256(b *testing.B) { genRandByteArrayX(256, b) }
+// func Benchmark_genRandByteArray512(b *testing.B) { genRandByteArrayX(512, b) }
+
+func Benchmark_lxivFilter_Add(b *testing.B) {
+	const amount = 1000000
+	const times = 100000
+	lf := NewDefault()
+	// lf := New(amount, 0.0001)
+	ss := make([][]byte, times)
+	b.N = times
+	for i := 0; i < b.N; i++ {
+		ss[i] = genRandByteArray(32)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		lf.Add(ss[i])
+	}
+}
+
+func Benchmark_lxivFilter_MayExist_allMiss(b *testing.B) {
+	const amount = 1000000
+	const times = 100000
+	lf := NewDefault()
+	// lf := New(amount, 0.0001)
+	ss := make([][]byte, times)
+	b.N = times
+	for i := 0; i < b.N; i++ {
+		ss[i] = genRandByteArray(32)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		lf.MayExist(ss[i])
+	}
+}
+
+func Benchmark_lxivFilter_MayExist_allHit(b *testing.B) {
+	const amount = 1000000
+	const times = 100000
+	lf := NewDefault()
+	// lf := New(amount, 0.0001)
+	ss := make([][]byte, times)
+	b.N = times
+	for i := 0; i < b.N; i++ {
+		ss[i] = genRandByteArray(32)
+	}
+	for i := 0; i < b.N; i++ {
+		lf.Add(ss[i])
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		lf.MayExist(ss[i])
+	}
 }

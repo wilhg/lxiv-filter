@@ -19,7 +19,7 @@ go get -u github.com/cuebyte/lxiv-filter
 ```go
 import "github.com/cuebyte/lxiv-filter"
 
-lf := lxivFilter.NewDefault() // == lf.ManualNew(1<<32, 5)
+lf := lxivFilter.NewDefault() // == lf.New(1<<32, 5)
 
 // The size has to be a power of 2, and greater than 64.
 lf.Size()                           // Return 1 << 32
