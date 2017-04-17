@@ -1,13 +1,15 @@
 package lxivFilter
 
 import (
+	"log"
+
 	"github.com/spaolacci/murmur3"
 )
 
 type lxivFilter struct {
 	cells []cell
 
-	size uint32
+	size uint64
 	k    int
 }
 
@@ -15,9 +17,12 @@ type lxivFilter struct {
 // size here is to define the size of []uint64 array
 // k means the number of times to call hash functions, here is using murmur3
 // they means you will get a 64*size bit-map, with k times hash call
-func New(size uint32, k int) *lxivFilter {
+func New(size uint64, k int) *lxivFilter {
 	if size&(size-1) != 0 {
 		panic("Please set the size as a power of 2")
+	}
+	if k > 32 {
+		panic("k shouldn't greater than 32")
 	}
 	cells := make([]cell, size)
 	return &lxivFilter{cells, size, k}
@@ -25,18 +30,18 @@ func New(size uint32, k int) *lxivFilter {
 
 // NewDefault will new an LxivFilter who's size=1<<32 - 1, k = 5
 // It will cost 1GB memory
-func NewDefault() *lxivFilter { return New((1<<32 - 1), 5) }
+func NewDefault() *lxivFilter { return New((1 << 32), 5) }
 
 // Reset will clean the whole filter
 func (lf *lxivFilter) Reset()      { lf.cells = make([]cell, lf.size) }
-func (lf lxivFilter) Size() uint32 { return lf.size }
+func (lf lxivFilter) Size() uint64 { return lf.size }
 func (lf lxivFilter) K() int       { return lf.k }
 
 // MayExist will check whether the data may exist (true), or definite not exist (false)
 func (lf lxivFilter) MayExist(data []byte) bool {
 	for i := 0; i < lf.k; i++ {
 		mapIdx, cellIdx := lf.calcPosition(append(data, byte(i)))
-		if lf.cells[mapIdx].at(cellIdx) == false {
+		if !lf.cells[mapIdx].at(cellIdx) {
 			return false
 		}
 	}
@@ -51,12 +56,13 @@ func (lf *lxivFilter) Add(data []byte) {
 	}
 }
 
-func (lf lxivFilter) calcPosition(data []byte) (mapIdx uint32, cellIdx uint8) {
+func (lf lxivFilter) calcPosition(data []byte) (uint64, uint8) {
 	hash := murmur3.New64()
 	hash.Write(data)
 	hashCode := hash.Sum64()
 
-	mapIdx = uint32((hashCode >> 6) & uint64(lf.size-1)) // == (hashCode >> 6) % lf.size
-	cellIdx = uint8(hashCode & (1<<7 - 1))               // ==  hashCode % 64
-	return
+	mapIdx := uint64((hashCode >> 6) & uint64(lf.size-1)) // == (hashCode >> 6) % lf.size
+	cellIdx := uint8(hashCode & (1<<7 - 1))               // ==  hashCode % 64
+	log.Printf("%x %x", mapIdx, cellIdx)
+	return mapIdx, cellIdx
 }
